@@ -1,0 +1,47 @@
+2025-12-28T14:38:10.930Z [INFO] ----------------------invoke validate_cves_for_java----------------------
+2025-12-28T14:38:10.932Z [INFO] [Tool.invoke]({name: validate_cves_for_java, input: {
+  "dependencies": [
+    "org.springframework.boot:spring-boot-starter-web:3.2.1",
+    "org.springframework.boot:spring-boot-starter-websocket:3.2.1",
+    "org.springframework.boot:spring-boot-starter-data-jpa:3.2.1",
+    "com.mysql:mysql-connector-j:8.2.0",
+    "org.projectlombok:lombok:1.18.30"
+  ],
+  "projectPath": "c:\\Users\\DIVYA\\OneDrive\\Documents\\Chat-app"
+}}).
+2025-12-28T14:38:10.933Z [INFO] [Task.start](): Starting task toolCall
+2025-12-28T14:38:10.935Z [INFO] [Task.start](): Started task toolCall
+2025-12-28T14:38:10.936Z [INFO] [Tool.invoke] validate GitHub Copilot license.
+2025-12-28T14:38:10.938Z [INFO] [Tool.invoke] do pre-invoke.
+2025-12-28T14:38:10.939Z [INFO] [Tool.invoke] do invoke.
+2025-12-28T14:38:10.940Z [INFO] Getting CVEs for dependencies: org.springframework.boot:spring-boot-starter-web:3.2.1,org.springframework.boot:spring-boot-starter-websocket:3.2.1,org.springframework.boot:spring-boot-starter-data-jpa:3.2.1,com.mysql:mysql-connector-j:8.2.0,org.projectlombok:lombok:1.18.30
+2025-12-28T14:38:10.941Z [INFO] getting CVEs for dependencies:
+ - org.springframework.boot:spring-boot-starter-web:3.2.1
+  - org.springframework.boot:spring-boot-starter-websocket:3.2.1
+  - org.springframework.boot:spring-boot-starter-data-jpa:3.2.1
+  - com.mysql:mysql-connector-j:8.2.0
+  - org.projectlombok:lombok:1.18.30...
+2025-12-28T14:38:10.941Z [INFO] getting gitHub access token...
+2025-12-28T14:38:36.421Z [ERROR] Failed to get GitHub access token to validate CVEs for the given dependencies.
+2025-12-28T14:38:36.422Z [INFO] Processing batch 1/1, size: 5
+2025-12-28T14:38:36.424Z [INFO] listing CVEs from GitHub for dependencies [
+  "org.springframework.boot:spring-boot-starter-web:3.2.1",
+  "org.springframework.boot:spring-boot-starter-websocket:3.2.1",
+  "org.springframework.boot:spring-boot-starter-data-jpa:3.2.1",
+  "com.mysql:mysql-connector-j:8.2.0",
+  "org.projectlombok:lombok:1.18.30"
+]
+2025-12-28T14:38:37.119Z [INFO] Fetched 0 total advisories across all pages
+2025-12-28T14:38:37.120Z [INFO] grouping CVEs and finding max patched version by dep...
+2025-12-28T14:38:37.121Z [INFO] done getting 0 CVEs for 5 dependencies
+2025-12-28T14:38:37.122Z [INFO] calculating patched version by dep...
+2025-12-28T14:38:37.123Z [INFO] finished getting CVEs for dependencies.
+2025-12-28T14:38:37.124Z [INFO] Found 0 dependencies with known CVEs
+2025-12-28T14:38:37.125Z [INFO] No known CVEs found for dependencies: org.springframework.boot:spring-boot-starter-web:3.2.1,org.springframework.boot:spring-boot-starter-websocket:3.2.1,org.springframework.boot:spring-boot-starter-data-jpa:3.2.1,com.mysql:mysql-connector-j:8.2.0,org.projectlombok:lombok:1.18.30
+2025-12-28T14:38:37.126Z [INFO] [Tool.invoke]({result: {
+  "message": "No known CVEs found for the given dependencies."
+}}).
+2025-12-28T14:38:37.126Z [INFO] [Task.complete](): Completing task toolCall
+2025-12-28T14:38:37.128Z [INFO] [Task.complete](): Completed task toolCall
+2025-12-28T14:38:37.128Z [INFO] [Tool.invoke]({message: No known CVEs found for the given dependencies.}).
+2025-12-28T14:38:37.129Z [INFO] ----------------------invoked validate_cves_for_java----------------------
