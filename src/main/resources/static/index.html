@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Private Chat</title>
+
+    <!-- WebSocket libs -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 20px;
+        }
+
+        .chat-container {
+            display: flex;
+            width: 80%;
+            max-width: 900px;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+
+        /* USER LIST */
+        .user-list {
+            width: 25%;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .user-list input {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .user-list ul {
+            list-style: none;
+            padding: 0;
+            max-height: 420px;
+            overflow-y: auto;
+        }
+
+        .user-list li {
+            padding: 10px;
+            margin-bottom: 5px;
+            background: #e4e6eb;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .user-list li:hover {
+            background: #d8dadf;
+        }
+
+        /* 🔥 ACTIVE USER */
+        .user-list li.active {
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* REGISTER BUTTON */
+        .user-list button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: none;
+            background: #ff9800;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .user-list button:hover {
+            background: #e68900;
+        }
+
+        /* CHAT AREA */
+        .chat-box {
+            width: 75%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        #chat {
+            padding: 10px;
+            height: 450px;
+            overflow-y: auto;
+            background: #f7f7f7;
+        }
+
+        .message {
+            margin: 6px 0;
+            max-width: 70%;
+            padding: 8px 12px;
+            border-radius: 20px;
+            clear: both;
+        }
+
+        .message.sent {
+            background-color: #dcf8c6;
+            margin-left: auto;
+        }
+
+        .message.received {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            margin-right: auto;
+        }
+
+        .send-area {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+            background: #eee;
+        }
+
+        .send-area input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+
+        .send-area button {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        .send-area button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Private Chat App</h2>
+
+<div class="chat-container">
+
+    <!-- USER LIST -->
+    <div class="user-list">
+        <input type="text" id="searchUser" placeholder="Search users..." onkeyup="filterUsers()">
+        <ul id="userDropdown"></ul>
+        <button onclick="registerUser()">+ Register User</button>
+    </div>
+
+    <!-- CHAT BOX -->
+    <div class="chat-box">
+        <div id="chat"></div>
+        <div class="send-area">
+            <input type="text" id="message" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+/* LOGIN CHECK */
+let loggedInUser = sessionStorage.getItem("username");
+if (!loggedInUser) {
+    window.location.href = "login.html";
+}
+
+/* SOCKET */
+let socket = new SockJS('/ws');
+let stompClient = Stomp.over(socket);
+let currentReceiver = null;
+
+/* CONNECT */
+stompClient.connect({}, function () {
+    stompClient.subscribe('/user/queue/messages', function (msg) {
+        let data = JSON.parse(msg.body);
+        if (data.sender === currentReceiver || data.sender === loggedInUser) {
+            addMessage(data.sender, data.content, data.sender === loggedInUser);
+        }
+    });
+});
+
+/* LOAD USERS */
+let allUsers = [];
+
+function loadUsers() {
+    fetch("/auth/users")
+        .then(res => res.json())
+        .then(users => {
+            allUsers = users.filter(u => u !== loggedInUser);
+            displayUsers(allUsers);
+        });
+}
+
+function displayUsers(users) {
+    let ul = document.getElementById("userDropdown");
+    ul.innerHTML = "";
+
+    users.forEach(u => {
+        let li = document.createElement("li");
+        li.textContent = u;
+
+        li.onclick = function () {
+            currentReceiver = u;
+
+            // 🔥 highlight selected user
+            document.querySelectorAll(".user-list li").forEach(item => {
+                item.classList.remove("active");
+            });
+            li.classList.add("active");
+
+            document.getElementById("chat").innerHTML = "";
+
+            // 🔥 LOAD PREVIOUS CHAT
+            fetch(`/messages/${loggedInUser}/${u}`)
+                .then(res => res.json())
+                .then(messages => {
+                    messages.forEach(m => {
+                        addMessage(m.sender, m.content, m.sender === loggedInUser);
+                    });
+                });
+        };
+
+        ul.appendChild(li);
+    });
+}
+
+/* FILTER USERS */
+function filterUsers() {
+    let input = document.getElementById("searchUser").value.toLowerCase();
+    displayUsers(allUsers.filter(u => u.toLowerCase().startsWith(input)));
+}
+
+/* SEND MESSAGE */
+function sendMessage() {
+    if (!currentReceiver) {
+        alert("Select a user first!");
+        return;
+    }
+
+    let msg = document.getElementById("message").value;
+    if (!msg) return;
+
+    stompClient.send("/app/private", {}, JSON.stringify({
+        sender: loggedInUser,
+        receiver: currentReceiver,
+        content: msg
+    }));
+
+    addMessage(loggedInUser, msg, true);
+    document.getElementById("message").value = "";
+}
+
+/* ADD MESSAGE */
+function addMessage(sender, text, sent) {
+    let chat = document.getElementById("chat");
+    let div = document.createElement("div");
+    div.className = "message " + (sent ? "sent" : "received");
+    div.innerText = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+/* REGISTER USER */
+function registerUser() {
+    let username = prompt("Enter new username:");
+    if (!username) return;
+
+    let password = prompt("Enter password:");
+    if (!password) return;
+
+    fetch("/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+    }).then(res => {
+        if (res.ok) {
+            alert("Registration successful");
+            loadUsers();
+        } else {
+            res.text().then(t => alert("Failed: " + t));
+        }
+    });
+}
+
+window.onload = loadUsers;
+</script>
+
+</body>
+</html>
+
